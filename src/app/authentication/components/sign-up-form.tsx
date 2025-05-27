@@ -1,5 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 
 const registerSchema = z.object({
   name: z.string().trim().min(1, { message: "Nome é obrigatório" }),
@@ -35,6 +39,7 @@ const registerSchema = z.object({
 });
 
 const SignUpForm = () => {
+  const router = useRouter();
   const registerForm = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -44,8 +49,26 @@ const SignUpForm = () => {
     },
   });
 
-  function onRegisterSubmit(values: z.infer<typeof registerSchema>) {
-    console.log(values);
+  async function onRegisterSubmit(values: z.infer<typeof registerSchema>) {
+    await authClient.signUp.email(
+      {
+        email: values.email,
+        password: values.password,
+        name: values.name,
+      },
+      {
+        onSuccess: () => {
+          router.push("/dashboard");
+        },
+        onError: (error) => {
+          if (error.error.status === 422) {
+            toast.error("Este email já está em uso.");
+          } else {
+            toast.error("Erro ao criar conta");
+          }
+        },
+      },
+    );
   }
   return (
     <Card>
@@ -106,9 +129,11 @@ const SignUpForm = () => {
               className="w-full"
               disabled={registerForm.formState.isSubmitting}
             >
-              {registerForm.formState.isSubmitting
-                ? "Cadastrando..."
-                : "Criar conta"}
+              {registerForm.formState.isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Criar conta"
+              )}
             </Button>
           </CardFooter>
         </form>
