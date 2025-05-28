@@ -15,6 +15,7 @@ const AuthenticationPage = async () => {
   if (session) {
     redirect("/dashboard");
   }
+  
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-gray-50 max-sm:px-4">
       <Tabs defaultValue="login" className="w-[400px]">
